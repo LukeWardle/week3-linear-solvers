@@ -1,0 +1,28 @@
+# Python compiled files
+__pycache__/ 
+*.py[cod] 
+*$py.class 
+*.so 
+ 
+# Virtual environment (never commit this) 
+venv/ 
+env/ 
+ENV/ 
+.venv/ 
+ 
+# IDE configuration files 
+.vscode/ 
+.idea/ 
+*.swp 
+*.swo 
+ 
+# Testing and coverage 
+.pytest_cache/ 
+.coverage 
+htmlcov/ 
+ 
+# Operating system files 
+# macOS (if others collaborate) 
+.DS_Store 
+# Windows       
+Thumbs.db        
