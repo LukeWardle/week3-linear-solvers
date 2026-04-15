@@ -57,7 +57,7 @@ class TestSolveDirect:
     
     """
     A = np.eye(3)
-    b = np.array([1.0, 2.0, 3.0])
+    b = np.array([1.0, 2.0, 3.0], dtype=float)
     x = solve_direct(A, b)
     np.testing.assert_allclose(x, b)
 
@@ -71,7 +71,7 @@ class TestSolveDirect:
     A = np.array([[1, 1], [2, 1], [3, 1], [4, 1]], dtype=float)
     b = np.array([2, 3, 4, 5], dtype=float)
     x = solve_direct(A, b)
-    assert x.shape == (2, )                   # Two unknowns: slope and intercept
+    assert x.shape == (2,)                   # Two unknowns: slope and intercept
     residual = np.linalg.norm(A @ x - b)
     assert residual < 1.0                     # Not zero (overdetermined), but small
 
@@ -108,32 +108,49 @@ class TestSolveLU:
   """
   def test_matches_direct_solver(self):
     """
-    "Verify Monday Part 2 worked example: A=[[2,3],[4,7]], b=[5,13] → [-2, 3].
+    Verify LU solver matches direct solver on a 3x3 system.
     
     """
     A = np.array([[3, 1, -1], [1, 3, 1], [-1, 1, 3]], dtype=float)
-    b = np.array([1.0, 5.0, 3.0])
+    b = np.array([1.0, 5.0, 3.0], dtype=float)
     x_direct = solve_direct(A, b)
     x_lu = solve_lu(A, b)
     np.testing.assert_allclose(x_lu, x_direct, rtol=1e-10)
 
-  def test_monday_lu_example(self):
+  def test_monday_lu_2x2_example(self):
     """
     LU and direct methods must produce identical results.
     
     """
     A = np.array([[2, 3], [4, 7]], dtype=float) 
-    b = np.array([5.0, 13.0]) 
+    b = np.array([5.0, 13.0], dtype=float) 
     x = solve_lu(A, b) 
     np.testing.assert_allclose(x, [-2, 3], rtol=1e-10) 
+
+  def test_monday_lu_3x3_example(self):
+    """
+    Verify Monday Part 2 3x3 LU example:
+    A = [[2, 1, -1], [-3, -1, 2], [-2, 1, 2]]
+    b = [8, -11, -3]
+    Expected solution: [2, 3, -1]
+    
+    """
+    A = np.array([[2, 1, -1],
+                  [-3, -1, 2], 
+                  [-2, 1, 2]], dtype=float) 
+    b = np.array([8, -11, -3], dtype=float) 
+    x = solve_lu(A, b) 
+    np.testing.assert_allclose(x, [2, 3, -1], rtol=1e-10) 
   
   def test_non_square_raises_value_error(self):
     """
     LU requires square matrix - non-square should raise ValueError.
     
     """
-    A = np.array([[1, 2], [3, 4], [5, 6]], dtype=float)   # 3×2, not square
-    b = np.array([1.0, 2.0, 3.0])
+    A = np.array([[1, 2],
+                  [3, 4],
+                  [5, 6]], dtype=float)   # 3×2, not square
+    b = np.array([1.0, 2.0, 3.0], dtype=float)
     with pytest.raises(ValueError, match="square matrix"):
       solve_lu(A, b)
     # match="square matrix" confirms the error message contains that phrase
@@ -188,7 +205,7 @@ class TestSolveSmart:
     """
 
     A = np.array([[2, 1], [1, 2]], dtype=float) 
-    b = np.array([3.0, 3.0]) 
+    b = np.array([3.0, 3.0], dtype=float) 
     result = solve_smart(A, b) 
     assert isinstance(result, tuple), "solve_smart() must return a tuple" 
     assert len(result) == 2, "Tuple must have exactly 2 elements" 
@@ -202,7 +219,7 @@ class TestSolveSmart:
   
     """ 
     A = np.array([[2, 1], [1, 2]], dtype=float) 
-    b = np.array([3.0, 3.0]) 
+    b = np.array([3.0, 3.0], dtype=float) 
     _, info = solve_smart(A, b) 
     required_keys = {"method", "shape", "cond", "residual", "warning"} 
     assert required_keys.issubset(info.keys()), f"Missing keys: {required_keys - info.keys()}" 
@@ -213,7 +230,7 @@ class TestSolveSmart:
   
     """ 
     A = np.array([[1, 1], [1, 2], [1, 3]], dtype=float)   # 3×2 
-    b = np.array([2.0, 3.0, 4.0]) 
+    b = np.array([2.0, 3.0, 4.0], dtype=float) 
     _, info = solve_smart(A, b) 
     assert info["method"] == "lstsq", f"Expected lstsq for non-square, got {info['method']}" 
  
@@ -225,7 +242,7 @@ class TestSolveSmart:
   
     """ 
     A = np.array([[1.0, 1.0001], [1.0001, 1.0002]], dtype=float) 
-    b = np.array([2.0001, 2.0003]) 
+    b = np.array([2.0001, 2.0003], dtype=float) 
     _, info = solve_smart(A, b) 
     assert info["warning"] is not None, "Ill-conditioned matrix should produce a warning" 
 
