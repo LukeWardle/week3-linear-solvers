@@ -25,6 +25,7 @@ Usage:
 """
 
 import numpy as np
+from sklearn.linear_model import RidgeCV
 from scipy.linalg import lu_factor, lu_solve
 from typing import Tuple, Dict, Any
 
@@ -151,14 +152,20 @@ def condition_number(A: np.ndarray) -> float:
   """
   return float(np.linalg.cond(A))
 
-def solve_smart(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, Dict[str, Any]]:
+def solve_smart(
+    A: np.ndarray,
+    b: np.ndarray,
+    use_ridge: bool=False) -> Tuple[np.ndarray, Dict[str, Any]]:
   """
   Solve Ax = b with automatic method selection and full diagnostics.
 
   Selects the solving method based on matrix shape and condition number:
     - Non-square (m ≠ n): least-square via solve_direct()
     - Square, k < 10^6: direct via solve_direct()
-    - Square, k ≥ 10^6: LU decomposition via solve_lu()
+    - Square, 10^6 ≤ k ≤ 10^8: LU decomposition via solve_lu()
+    - Square, k > 10^8: 
+        - RidgeCV if use_ridge=True
+        - otherwise LU decomposition
 
   Args:
     A: Coefficient matrix, any shape (m, n).
@@ -224,9 +231,14 @@ def solve_smart(A: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, Dict[str, Any
       x = solve_direct(A, b) 
       info['method'] = 'direct' 
     else: 
-      # Ill-conditioned: LU with partial pivoting 
-      x = solve_lu(A, b) 
-      info['method'] = 'lu'
+      if kappa > 1e8 and use_ridge:
+        model = RidgeCV(alphas=[0.1, 1.0, 10.0])
+        model.fit(A, b)
+        x = model.coef_.reshape(-1)
+        info['method'] = 'ridge'
+      else:
+        x = solve_lu(A, b)
+        info['method'] = 'lu'
 
   # ── Step 4: Compute residual — always ──────────────────────────── 
   info['residual'] = float(np.linalg.norm(A @ x - b)) 
