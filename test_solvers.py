@@ -249,3 +249,32 @@ class TestSolveSmart:
     # Warning message should mention condition or κ 
     warning_lower = info["warning"].lower() 
     assert any(kw in warning_lower for kw in ["cond", "ill", "κ", "kappa"]), f"Warning should mention conditioning, got: {info['warning']}"
+
+  # Ridge feature tests
+  def test_uses_ridge_when_enabled_for_ill_conditioned(self):
+    """
+    Ridge should be selected when matrix is ill-conditioned and use_ridge=True
+    
+    """
+    A = np.array([[1.0, 1.0000001],
+                  [1.0000001, 1.0000002]
+                  ], dtype=float)  # This pushes k very high
+    b = np.array([2.0001, 2.0003], dtype=float)
+    x, info = solve_smart(A, b, use_ridge=True)
+    assert info["method"] == "ridge", f"Expected ridge, got {info['method']}" 
+    assert x.shape == (2,)
+    assert np.all(np.isfinite(x))
+
+  def test_falls_back_to_lu_when_ridge_disabled(self):
+    """
+    Ill-conditioned system should fall back to LU when use-ridge=False.
+    
+    """
+    A = np.array([[1.0, 1.0000001],
+                  [1.0000001, 1.0000002]
+                  ], dtype=float)
+    b = np.array([2.0001, 2.0003], dtype=float)
+    x, info = solve_smart(A, b, use_ridge=False)
+    assert info["method"] == "lu", f"Expected lu, got {info['method']}"
+    assert x.shape == (2,)
+    assert np.all(np.isfinite(x))
